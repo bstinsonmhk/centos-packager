@@ -39,7 +39,13 @@ def download_cert(username, password, topurl=None):
     userurl = urlparse.urlunsplit(userspliturl)
     servercaurl = urlparse.urlunsplit(servercaspliturl)
 
-    with open(os.path.expanduser(defaults.USER_CERT_FILE), 'w') as usercertfile:
+    certfile = os.path.expanduser(defaults.USER_CERT_FILE)
+    if os.path.exists(certfile):
+        # Delete file in case we are changing its mode
+        os.unlink(certfile)
+    flags = os.O_WRONLY | os.O_CREAT
+    mode = 0o600
+    with os.fdopen(os.open(certfile, flags, mode), 'w') as usercertfile:
         r = requests.post(userurl, params=params)
         try:
             r.raise_for_status()
@@ -71,8 +77,6 @@ Message: {1}""".format(e.response.status_code, e.response.reason)).strip()
 
     os.symlink(os.path.expanduser(defaults.SERVER_CA_CERT_FILE),
                os.path.expanduser(defaults.UPLOAD_CA_CERT_FILE))
-
-    os.chmod(os.path.expanduser(defaults.USER_CERT_FILE), 0o600)
 
 
 def main(opts):
