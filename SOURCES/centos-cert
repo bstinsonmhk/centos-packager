@@ -1,17 +1,22 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 
 import os
 import pwd
 import sys
 import optparse
-import urlparse
 import requests
 
 from getpass import getpass
 
 from centos import CentOSUserCert
 from centos import defaults
+
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse
 
 
 def download_cert(username, password, topurl=None):
@@ -46,7 +51,7 @@ def download_cert(username, password, topurl=None):
         except requests.exceptions.HTTPError as e:
             print("""Could not generate certificate!
 Response Code: {0}
-Message: {1}""".format(e.response.status_code, e.response.reason)).strip()
+Message: {1}""".format(e.response.status_code, e.response.reason).strip())
             sys.exit(1)
 
         response = r.text
@@ -59,7 +64,7 @@ Message: {1}""".format(e.response.status_code, e.response.reason)).strip()
         except requests.exceptions.HTTPError as e:
             print("""Could not download CA Certificate!
 Response Code: {0}
-Message: {1}""".format(e.response.status_code, e.response.reason)).strip()
+Message: {1}""".format(e.response.status_code, e.response.reason).strip())
             sys.exit(1)
 
         response = r.text
@@ -88,26 +93,26 @@ def main(opts):
         try:
             cert = CentOSUserCert(certfile)
             username = cert.CN
-        except IOError, e:
+        except IOError as e:
             if opts.verifycert:
-                print "{0}: {1}".format(os.path.expanduser(certfile), e.strerror)
+                print("{0}: {1}".format(os.path.expanduser(certfile), e.strerror))
                 exit(1)
             username = pwd.getpwuid(os.geteuid())[0]
 
     if opts.verifycert:
         if not cert.valid:
-            print "Your certificate is not valid"
+            print("Your certificate is not valid")
             sys.exit(1)
         else:
-            print "Your certificate is valid"
+            print("Your certificate is valid")
             sys.exit(0)
 
     if opts.newcert:
         password = getpass('ACO Password: ')
         download_cert(username, password)
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     parser = optparse.OptionParser(usage="%prog [OPTIONS] ")
     parser.add_option('-u', '--username', action='store', dest='username',
                       default=False, help="ACO Username.")
@@ -120,7 +125,7 @@ if __name__ == '__main__':
     opts, args = parser.parse_args()
 
     if not opts.newcert and not opts.verifycert:
-        print "Must specify one of arguments: -v or -n"
+        print("Must specify one of arguments: -v or -n")
         parser.print_help()
         sys.exit(1)
 
