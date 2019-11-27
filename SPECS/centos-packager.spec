@@ -1,6 +1,17 @@
+%if 0%{?fedora} >= 28 || 0%{?rhel} >= 8
+# Use Python 3
+%global     python_major_version 3
+%global     python_dist()   python3dist(%1)
+%else
+# Use Python 2
+%global     python_major_version 2
+%global     python_dist()   python2-%1
+%endif
+
+
 Name:           centos-packager
 Version:        0.5.5
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Tools and files necessary for building CentOS packages
 Group:          Applications/Productivity
 
@@ -14,7 +25,7 @@ Requires:       koji
 Requires:       rpm-build rpmdevtools rpmlint
 Requires:       mock curl openssh-clients
 Requires:       redhat-rpm-config
-Requires:       python-centos
+Requires:       %{python_dist centos}
 
 BuildArch:      noarch
 
@@ -34,6 +45,9 @@ cp %{SOURCE1} .
 
 %{__mkdir_p} %{buildroot}/%{_bindir}
 ln -sf %{_bindir}/koji %{buildroot}%{_bindir}/cbs
+
+# Fix shebang to require explicit python version
+sed -i.backup -E '1s|#!/usr/bin/python\>|\0%{python_major_version}|' %{SOURCE2}
 %{__install} -m 0755 %{SOURCE2} %{buildroot}%{_bindir}/centos-cert
 
 %files
@@ -44,6 +58,9 @@ ln -sf %{_bindir}/koji %{buildroot}%{_bindir}/cbs
 %{_bindir}/centos-cert
 
 %changelog
+* Wed Nov 27 2019 Jan Staněk <jstanek@redhat.com> - 0.5.5-2
+- Use Python3 on F28+ and EL 8+
+
 * Mon Nov 28 2016 brian@bstinson.com 0.5.5-1
 - Update more references to ACO
 - Make sure Exception messages don't print credentials to the screen
@@ -69,7 +86,7 @@ ln -sf %{_bindir}/koji %{buildroot}%{_bindir}/cbs
 
 * Sun Jul 26 2015 brian@bstinson.com 0.2.0-1
 - Added the centos_cert utility
-- Remove the dep on centpkg 
+- Remove the dep on centpkg
 - Add a dep for python-centos
 
 * Sun Dec 14 2014 Brian Stinson <bstinson@ksu.edu> - 0.1.0-1
